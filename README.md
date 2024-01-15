@@ -1,0 +1,1 @@
+# Securing Spring boot application with Spring Security and JWT
