@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -21,7 +20,7 @@ public class JwtService {
     @Value("${app.security.jwt.expiration}")
     private long jwtExpiration;
 
-    @Value("${app.security.jwt.expiration}")
+    @Value("${app.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
 
     @Value("${app.security.jwt.secret-key}")
@@ -49,7 +48,7 @@ public class JwtService {
     public String generateRefreshToken(
             UserDetails userDetails
     ) {
-        return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+        return buildToken(Map.of(), userDetails, refreshExpiration);
     }
 
     private String buildToken(
