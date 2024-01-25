@@ -2,6 +2,9 @@ package com.sentinelql.security.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sentinelql.security.config.JwtService;
+import com.sentinelql.security.token.Token;
+import com.sentinelql.security.token.TokenRepository;
+import com.sentinelql.security.token.TokenType;
 import com.sentinelql.security.user.Role;
 import com.sentinelql.security.user.User;
 import com.sentinelql.security.user.UserRepository;
@@ -30,6 +33,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final TokenRepository tokenRepository;
     public AuthenticationResponse register(RegisterRequest request) {
         var user = User.builder()
                 .firstname(request.getFirstname())
@@ -39,14 +43,26 @@ public class AuthService {
                 .role(USER)
                 .build();
 
-        userRepository.save(user);
+        var savedUser = userRepository.save(user);
 
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
+        saveUserToken(savedUser, jwtToken);
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    private void saveUserToken(User user, String jwtToken) {
+        var token = Token.builder()
+                .user(user)
+                .token(jwtToken)
+                .tokenType(TokenType.BEARER)
+                .expired(false)
+                .revoked(false)
+                .build();
+        tokenRepository.save(token);
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -63,6 +79,7 @@ public class AuthService {
 
             var jwtToken = jwtService.generateToken(user);
             var refreshToken = jwtService.generateRefreshToken(user);
+            saveUserToken(user, jwtToken);
             return AuthenticationResponse.builder()
                     .accessToken(jwtToken)
                     .refreshToken(refreshToken)
